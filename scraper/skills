@@ -1,0 +1,54 @@
+import re
+
+SKILLS = {
+    "Python": ("Backend", r"python|پایتون|파이썬"),
+    "Java": ("Backend", r"\bjava\b|جاوا(?!\s*اسکریپت)|자바(?!스크립트)"),
+    "Kotlin": ("Backend", r"kotlin|کاتلین|코틀린"),
+    "Go": ("Backend", r"\bgolang\b|\bgo\b(?=\s*(lang|developer))|گولنگ"),
+    "PHP/Laravel": ("Backend", r"\bphp\b|laravel|لاراول"),
+    "Node.js": ("Backend", r"node\.?js|nest\.?js"),
+    "JavaScript": ("Frontend", r"javascript|جاوا ?اسکریپت|자바스크립트"),
+    "TypeScript": ("Frontend", r"typescript|تایپ ?اسکریپت|타입스크립트"),
+    "React/Next": ("Frontend", r"\breact(\.js)?\b|\bnext\.?js\b|ری‌?اکت|리액트"),
+    "Vue": ("Frontend", r"\bvue(\.js)?\b|ویو"),
+    "Android": ("Mobile", r"android|اندروید|안드로이드"),
+    "iOS/Swift": ("Mobile", r"\bswift\b|\bios\b|swiftui|آی‌?او‌?اس"),
+    "Flutter": ("Mobile", r"flutter|فلاتر|플러터"),
+    "SQL": ("Data", r"\bsql\b|mysql|postgres|اس‌?کیو‌?ال"),
+    "NoSQL": ("Data", r"mongo|redis|cassandra|elasticsearch|clickhouse"),
+    "Kafka/MQ": ("Data", r"kafka|rabbitmq|کافکا|카프카"),
+    "Spark/Airflow": ("Data", r"spark|airflow|hadoop|flink"),
+    "Machine Learning": ("AI", r"machine learning|یادگیری ماشین|\bml\b|머신러닝|딥러닝|deep learning"),
+    "LLM/GenAI": ("AI", r"\bllm\b|\bgpt\b|generative|langchain|\brag\b|هوش مصنوعی مولد|생성형"),
+    "PyTorch/TF": ("AI", r"pytorch|tensorflow|keras"),
+    "Docker": ("DevOps", r"docker|داکر|도커"),
+    "Kubernetes": ("DevOps", r"kubernetes|k8s|کوبرنتیز|쿠버네티스"),
+    "CI/CD": ("DevOps", r"ci/cd|jenkins|gitlab ci|github actions"),
+    "Cloud": ("DevOps", r"\baws\b|\bgcp\b|azure|cloud|클라우드"),
+    "Linux": ("DevOps", r"linux|لینوکس|리눅스"),
+    "Microservices": ("Arch", r"microservice|میکروسرویس|마이크로서비스|\bmsa\b"),
+    "REST/gRPC": ("Arch", r"\brest(ful)?\b|grpc|graphql"),
+    "Git": ("Tools", r"\bgit\b|گیت"),
+    "Testing": ("Tools", r"unit test|pytest|junit|jest|تست ?نویسی|테스트"),
+}
+_RX = {k: (c, re.compile(p, re.I)) for k, (c, p) in SKILLS.items()}
+
+
+def extract_skills(text):
+    return sorted(k for k, (_, rx) in _RX.items() if rx.search(text or ""))
+
+
+START = re.compile(r"(شرح شغل|وظایف و مسئولیت|مسئولیت‌ها|Responsibilities|What you.?ll do|주요\s?업무)", re.I)
+END = re.compile(r"(مهارت|شرایط|Requirements|Qualifications|자격\s?요건)", re.I)
+
+
+def extract_responsibilities(text):
+    text = text or ""
+    m = START.search(text)
+    if not m:
+        return []
+    rest = text[m.end():]
+    e = END.search(rest)
+    block = rest[:e.start()] if e else rest[:2000]
+    lines = [l.strip(" -•*\t") for l in block.splitlines()]
+    return [l for l in lines if 8 < len(l) < 300][:15]
